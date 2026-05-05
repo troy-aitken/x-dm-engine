@@ -21,8 +21,8 @@ Built and battle-tested by [BuzzLead](https://buzzlead.io). Extracted from our i
 ## Requirements
 
 - **Node.js 20+**
-- **X Developer account on Basic tier** ($200/mo) or higher.
-  Free tier does **not** include the DM endpoint. Confirm the price before signing up.
+- **X Developer account on Basic tier** $10 to get started then credit following.
+  Free tier does **not** include the DM endpoint. Confirm the $10 one time price before signing up.
 - **Notion workspace** (optional but recommended) — free tier works fine.
 
 ## How it works (architecture)
