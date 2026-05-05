@@ -72,7 +72,7 @@ cp .env.example apps/api/.env
 ### 1. Get X API credentials
 
 1. Go to [developer.x.com](https://developer.x.com) → Projects & Apps → create a new app.
-2. Subscribe to the **Basic tier** ($200/mo). Free tier won't work — DM endpoint is gated.
+2. Subscribe to the **Basic tier** ($10 one time). Free tier won't work — DM endpoint is gated.
 3. In the app's **User authentication settings**:
    - **App permissions:** Read and write and Direct Messages
    - **Type of App:** Web App, Automated App or Bot (Confidential client)
@@ -242,8 +242,8 @@ Process manager of your choice. Persistent storage only matters if you use `STOR
 
 ## Limits & gotchas
 
-- **DM endpoint requires X Basic ($200/mo).** This is the single biggest gotcha. Free tier returns 403.
-- **5 DMs / 15 min, ~100/day on Basic.** Pro tier raises this. The default `DM_BATCH_LIMIT=5` keeps you under the burst cap; the 15-min default `POLL_INTERVAL_MS` keeps you under the rolling cap.
+- **DM endpoint requires X Basic ($10 one time).** This is the single biggest gotcha. Free tier returns 403.
+- **5 DMs / 15 min, ~500/day on Basic.**  The default `DM_BATCH_LIMIT=5` keeps you under the burst cap; the 15-min default `POLL_INTERVAL_MS` keeps you under the rolling cap.
 - **Closed-DM users return 403.** The engine logs them as `skipped` (not `failed`) so they don't get retried forever. They also don't count against deduplication, so if they later open DMs you can re-run.
 - **Replier search uses recent-search.** It only sees replies from the past 7 days. If you're DMing a tweet older than that, replies won't surface. Likers are unaffected.
 - **No auth on the HTTP API by default.** Put a reverse proxy in front. Or fork and add auth — `src/server.ts` is ~50 lines.
