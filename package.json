@@ -1,31 +1,20 @@
 {
   "name": "x-dm-engine",
-  "version": "0.1.0",
+  "version": "0.2.0",
+  "private": true,
   "description": "Auto-DM users who like or reply to a tweet, with UTM tracking and dedup. Self-hosted, BYO X API keys.",
-  "type": "module",
-  "main": "dist/server.js",
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
-    "build": "tsc -p .",
-    "start": "node dist/server.js",
-    "dev": "tsx watch src/server.ts",
-    "oauth": "tsx scripts/oauth-cli.ts",
-    "setup-notion": "tsx scripts/setup-notion.ts",
-    "typecheck": "tsc -p . --noEmit"
+    "dev:api": "npm run dev --workspace=@x-dm-engine/api",
+    "dev:web": "npm run dev --workspace=@x-dm-engine/web",
+    "build": "npm run build --workspace=@x-dm-engine/api && npm run build --workspace=@x-dm-engine/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "oauth": "npm run oauth --workspace=@x-dm-engine/api --",
+    "setup-notion": "npm run setup-notion --workspace=@x-dm-engine/api"
   },
-  "keywords": ["x", "twitter", "dm", "automation", "engagement", "growth"],
   "license": "MIT",
-  "dependencies": {
-    "@notionhq/client": "^2.2.15",
-    "dotenv": "^16.4.5",
-    "express": "^4.21.0",
-    "zod": "^3.23.8"
-  },
-  "devDependencies": {
-    "@types/express": "^4.17.21",
-    "@types/node": "^22.7.4",
-    "tsx": "^4.19.1",
-    "typescript": "^5.6.2"
-  },
   "engines": {
     "node": ">=20"
   }

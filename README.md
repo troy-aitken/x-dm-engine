@@ -47,13 +47,26 @@ A single Express process runs both the HTTP API and the background poller. No da
 
 ---
 
+## Repo layout
+
+```
+x-dm-engine/
+├── apps/
+│   ├── api/      # Express server + background poller (Node)
+│   └── web/      # Optional Next.js dashboard (React)
+├── .env.example  # Used by apps/api at runtime
+└── README.md
+```
+
+The web UI is optional — every action is also available via the HTTP API. Run API-only if you'd rather hit it with curl or build your own front-end.
+
 ## Quick start
 
 ```bash
-git clone https://github.com/<your-fork>/x-dm-engine
+git clone https://github.com/troy-aitken/x-dm-engine
 cd x-dm-engine
 npm install
-cp .env.example .env
+cp .env.example apps/api/.env
 ```
 
 ### 1. Get X API credentials
@@ -107,25 +120,36 @@ npm run oauth -- buzzlead_io
 
 This spins up a temporary local server, prints an authorization URL, and saves tokens to your store after you approve. The `account_label` is what you'll pass as `owner` when starting campaigns.
 
-### 4. Start the server
+### 4. Start the API server
 
 ```bash
-npm run dev
-# or
-npm run build && npm start
+npm run dev:api
+# or for production:
+npm run build && npm start --workspace=@x-dm-engine/api
 ```
 
 You should see:
 
 ```
-{"t":"...","level":"info","msg":"x-dm-engine listening","meta":{"port":8787}}
+{"t":"...","level":"info","msg":"x-dm-engine listening","meta":{"port":8787,"authEnabled":false}}
 ```
 
-### 5. Start a campaign
+### 5. (Optional) Start the web UI
+
+In a second terminal:
+
+```bash
+npm run dev:web
+```
+
+Open http://localhost:3000. Enter your API URL (`http://localhost:8787`) and API token (leave blank if `API_TOKEN` is unset). You'll land on the dashboard where you can start, stop, and resume campaigns.
+
+### 6. Start a campaign (via curl, if you skipped the UI)
 
 ```bash
 curl -X POST http://localhost:8787/campaigns/start \
   -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer YOUR_API_TOKEN' \
   -d '{
     "tweetUrl": "https://x.com/yourhandle/status/1820000000000000000",
     "dmMessage": "Hey! Saw you liked the post. Here'\''s what I promised: https://example.com/playbook",
@@ -134,6 +158,8 @@ curl -X POST http://localhost:8787/campaigns/start \
     "durationDays": 7
   }'
 ```
+
+(Drop the `Authorization` header if `API_TOKEN` is unset.)
 
 The poller will start DMing within ~5 seconds. Check progress:
 
@@ -179,25 +205,38 @@ All routes are JSON. There's no built-in auth — put this behind a reverse prox
 | `PORT`                  | `8787`                           |                                                                  |
 | `POLL_INTERVAL_MS`      | `900000` (15 min)                | How often the engine checks active campaigns                     |
 | `DM_BATCH_LIMIT`        | `5`                              | Max DMs per campaign per poll. X Basic tier: 5/15min, ~100/day   |
+| `API_TOKEN`             | —                                | If set, /campaigns requires `Authorization: Bearer <token>`      |
+| `CORS_ORIGIN`           | `*`                              | Origin allowed to call the API (set to your web UI URL on prod)  |
 
 ---
 
 ## Deploy
 
-### Railway (one-click-ish)
+### Railway (recommended)
 
-1. Push the repo to GitHub.
-2. Create a new Railway project from the repo.
-3. Add the env vars from `.env`. Make sure `X_REDIRECT_URI` points at your Railway URL (e.g. `https://your-app.up.railway.app/oauth/callback`) and that **exact** URL is also registered in your X app settings.
-4. Deploy.
-5. From your local machine, run `npm run oauth -- <account>` once with `X_REDIRECT_URI` pointed at Railway — but actually it's easier to use the browser flow:
-   - Visit `https://your-app.up.railway.app/oauth/start?account=<your_label>`
-   - Authorize
-   - Tokens are stored remotely, ready for campaigns
+Two services in one project:
+
+**Service 1 — API** (root directory: `apps/api`)
+1. Add all env vars from `.env.example`.
+2. Generate `API_TOKEN` with `openssl rand -hex 32` and set it.
+3. Set `X_REDIRECT_URI` to `https://<your-api-domain>/oauth/callback` and register that **exact** URL in your X app settings.
+4. Deploy. Note the public URL.
+
+**Service 2 — Web** (root directory: `apps/web`)
+1. Set the public URL of the API service as something the browser can reach.
+2. Set `CORS_ORIGIN` on the API service to the web service's URL.
+3. Deploy.
+
+To connect an X account on the deployed instance, visit:
+`https://<your-api-domain>/oauth/start?account=<your_label>`
+in a browser, authorize, and you're done.
 
 ### Self-hosted (any node-friendly host)
 
-Standard `npm run build && npm start`. Process manager of your choice. Persistent storage only matters if you use `STORE_BACKEND=json` (`./data/` must survive restarts).
+API: `npm run build && npm start --workspace=@x-dm-engine/api`
+Web: `npm run build && npm start --workspace=@x-dm-engine/web`
+
+Process manager of your choice. Persistent storage only matters if you use `STORE_BACKEND=json` (`./data/` must survive restarts).
 
 ---
 
